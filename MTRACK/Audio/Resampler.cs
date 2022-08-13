@@ -44,16 +44,16 @@ public class Resampler
             {
                 for (int a = 0; a < 2; a++)
                 {
-                    short value = GetSample((channel.SamplePos + channel.Chunk * Channel.ChunkSamples) * 2 + a, ref sample);
-                    short valueNext = GetSample((channel.NextSamplePos + channel.Chunk * Channel.ChunkSamples) * 2 + a, ref sample);
+                    short value = GetSample((channel.SamplePos) * 2 + a, ref sample);
+                    short valueNext = GetSample((channel.NextSamplePos) * 2 + a, ref sample);
                     value = (short) CubicMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
                     SongBuffer[BufferPos * 2 + a] = Mix(SongBuffer[BufferPos * 2 + a], value);
                 }
             }
             else
             {
-                short value = GetSample(channel.SamplePos + channel.Chunk * Channel.ChunkSamples, ref sample);
-                short valueNext = GetSample(channel.NextSamplePos + channel.Chunk * Channel.ChunkSamples, ref sample);
+                short value = GetSample(channel.SamplePos, ref sample);
+                short valueNext = GetSample(channel.NextSamplePos, ref sample);
                 value = (short) CubicMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
                 SongBuffer[BufferPos * 2] = Mix(SongBuffer[BufferPos * 2], value);
                 SongBuffer[BufferPos * 2 + 1] = Mix(SongBuffer[BufferPos * 2 + 1], value);
@@ -66,11 +66,12 @@ public class Resampler
     public void SetSampleRate(uint channel, float sampleRate, uint sample)
     {
         ref Channel chn = ref _channels[channel];
+        //ref Sample smp = ref _samples[sample];
         chn.SampleRate = sampleRate;
         chn.Sample = sample;
         chn.SamplePos = 0;
         chn.Loop = true;
-        chn.LoopEnd = _samples[sample].DataLengthInSamples;
+        chn.LoopEnd = _samples[sample].DataLengthInSamples - 1;
     }
 
     public short GetSample(int pos, ref Sample sample)

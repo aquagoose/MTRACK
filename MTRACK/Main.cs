@@ -17,7 +17,7 @@ public class Main : Scene
         base.Initialize();
 
         _resampler =
-            new Resampler(1, 48000, true, new Sample[] {Sample.LoadFromWav("/home/ollie/Music/Kalimba.wav")});
+            new Resampler(1, 48000, true, new Sample[] {Sample.LoadFromWav("")});
         _resampler.SetSampleRate(0, 44100, 0);
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)

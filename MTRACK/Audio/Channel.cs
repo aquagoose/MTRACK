@@ -4,7 +4,7 @@ namespace MTRACK.Audio;
 
 public struct Channel
 {
-    public const int ChunkSamples = 48000;
+    public readonly int ChunkSamples;
     
     private float _resamplerSampleRate;
     private float _sampleRate;
@@ -27,13 +27,21 @@ public struct Channel
 
     public int SamplePos
     {
-        get => (int) _samplePos;
-        set => _samplePos = value;
+        get => (int) _samplePos + Chunk * ChunkSamples;
+        set => SamplePosF = value;
     }
 
     public int NextSamplePos => Speed < 1 ? SamplePos + 1 : SamplePos;
 
-    public float SamplePosF => _samplePos;
+    public float SamplePosF
+    {
+        get => _samplePos + Chunk * ChunkSamples;
+        set
+        {
+            Chunk = (int) (value / ChunkSamples);
+            _samplePos = value - (ChunkSamples * Chunk);
+        }
+    }
 
     public float NormalizedVolume;
 
@@ -46,10 +54,11 @@ public struct Channel
     public Channel(Resampler resampler)
     {
         _resamplerSampleRate = resampler.SampleRate;
-        _sampleRate = _resamplerSampleRate;
-        Speed = 1;
+        ChunkSamples = (int) resampler.SampleRate;
+        _sampleRate = 0;
+        Speed = 0;
         Sample = 0;
-        NormalizedVolume = 1;
+        NormalizedVolume = 0;
         _samplePos = 0;
         Chunk = 0;
         PlayingBackward = false;
@@ -60,6 +69,8 @@ public struct Channel
 
     public void Advance()
     {
+        if (_sampleRate == 0)
+            return;
         _samplePos += Speed;
         if (_samplePos >= ChunkSamples)
         {
@@ -67,11 +78,7 @@ public struct Channel
             _samplePos = _samplePos - ChunkSamples;
         }
 
-        if (Loop && _samplePos + Chunk * ChunkSamples >= LoopEnd)
-        {
-            _samplePos = _samplePos - LoopStart;
-            Chunk = (int) (_samplePos / ChunkSamples);
-            _samplePos = _samplePos - Chunk * ChunkSamples;
-        }
+        if (Loop && SamplePosF >= LoopEnd)
+            SamplePosF = LoopStart + (SamplePosF - LoopEnd);
     }
 }
