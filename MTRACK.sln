@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTRACK", "MTRACK\MTRACK.csproj", "{E63F3052-ADDB-4431-97E6-7B6B837CDBDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cubic", "..\..\Documents\C#\Cubic\Cubic\Cubic.csproj", "{37AEAB83-B9DD-4431-827B-9A452717D4A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cubic", "..\Cubic\Cubic\Cubic.csproj", "{37AEAB83-B9DD-4431-827B-9A452717D4A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -31,7 +31,16 @@ public struct Channel
         set => SamplePosF = value;
     }
 
-    public int NextSamplePos => Speed < 1 ? SamplePos + 1 : SamplePos;
+    public int NextSamplePos
+    {
+        get
+        {
+            if (Speed < 0)
+                return Speed > -1 ? SamplePos - 1 : SamplePos;
+            else
+                return Speed < 1 ? SamplePos + 1 : SamplePos;
+        }
+    }
 
     public float SamplePosF
     {
@@ -78,7 +87,32 @@ public struct Channel
             _samplePos = _samplePos - ChunkSamples;
         }
 
-        if (Loop && SamplePosF >= LoopEnd)
-            SamplePosF = LoopStart + (SamplePosF - LoopEnd);
+        if (_samplePos <= -ChunkSamples)
+        {
+            Chunk--;
+            _samplePos = _samplePos + ChunkSamples;
+        }
+
+        if (SamplePosF >= LoopEnd)
+        {
+            if (Loop)
+                SamplePosF = LoopStart + (SamplePosF - LoopEnd);
+            else
+            {
+                SampleRate = 0;
+                SamplePos = 0;
+            }
+        }
+
+        if (SamplePosF <= LoopStart)
+        {
+            if (Loop)
+                SamplePosF = LoopEnd - (SamplePosF + LoopStart);
+            else
+            {
+                SampleRate = 0;
+                SamplePos = 0;
+            }
+        }
     }
 }

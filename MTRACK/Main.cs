@@ -11,14 +11,18 @@ public class Main : Scene
     private AudioBuffer[] _buffers;
     private Resampler _resampler;
     private int _currentBuffer;
+    private float _sampleRate;
 
     protected override void Initialize()
     {
         base.Initialize();
 
+        Sample sample = Sample.LoadFromWav(@"/home/ollie/Music/r-59.wav");
+
+        _sampleRate = sample.SampleRate;
         _resampler =
-            new Resampler(1, 48000, true, new Sample[] {Sample.LoadFromWav("")});
-        _resampler.SetSampleRate(0, 44100, 0);
+            new Resampler(1, 48000, true, new Sample[] { sample });
+        _resampler.SetSampleRate(0, _sampleRate * 1.15f, 0);
         _buffers = new AudioBuffer[2];
         for (int i = 0; i < _buffers.Length; i++)
         {
@@ -48,6 +52,7 @@ public class Main : Scene
     {
         for (int i = 0; i < _resampler.BufferLengthInSamples; i++)
             _resampler.Advance();
+
         _resampler.BufferPos = 0;
     }
 }

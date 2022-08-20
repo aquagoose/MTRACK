@@ -14,6 +14,8 @@ public class Resampler
     public readonly short[] SongBuffer;
     public readonly uint BufferLengthInSamples;
 
+    public float SampleVolume;
+
     public Resampler(int numChannels, uint sampleRate, bool stereo, Sample[] samples)
     {
         SampleRate = sampleRate;
@@ -28,10 +30,13 @@ public class Resampler
         BufferLengthInSamples = sampleRate / 2;
         SongBuffer = new short[stereo ? BufferLengthInSamples * 2 : BufferLengthInSamples];
         BufferPos = 0;
+
+        SampleVolume = 1;
     }
 
     public void Advance()
     {
+        // Clear the song buffer at this position. If you remove this, it will try to mix with what's already there!
         SongBuffer[BufferPos * 2] = 0;
         SongBuffer[BufferPos * 2 + 1] = 0;
         for (int c = 0; c < _channels.Length; c++)
@@ -68,10 +73,18 @@ public class Resampler
         ref Channel chn = ref _channels[channel];
         //ref Sample smp = ref _samples[sample];
         chn.SampleRate = sampleRate;
+        //chn.SampleRate = -sampleRate;
         chn.Sample = sample;
         chn.SamplePos = 0;
+        //chn.SamplePos = (int) _samples[sample].DataLengthInSamples - 5;
         chn.Loop = true;
         chn.LoopEnd = _samples[sample].DataLengthInSamples - 1;
+    }
+
+    public void SetSampleRate(uint channel, float sampleRate)
+    {
+        ref Channel chn = ref _channels[channel];
+        chn.SampleRate = sampleRate;
     }
 
     public short GetSample(int pos, ref Sample sample)
@@ -91,6 +104,6 @@ public class Resampler
 
     private short Mix(short value1, short value2)
     {
-        return (short) CubicMath.Clamp(value1 + (value2), short.MinValue, short.MaxValue);
+        return (short) CubicMath.Clamp(value1 + (value2 * SampleVolume), short.MinValue, short.MaxValue);
     }
 }
