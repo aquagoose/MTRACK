@@ -3,56 +3,41 @@ using Cubic.Audio;
 using Cubic.Scenes;
 using MTRACK.Audio;
 using MTRACK.Tracker;
+using Note = MTRACK.Tracker.Note;
+using Octave = MTRACK.Tracker.Octave;
+using Pattern = MTRACK.Tracker.Pattern;
+using PianoKey = MTRACK.Tracker.PianoKey;
+using Track = MTRACK.Tracker.Track;
 
 namespace MTRACK;
 
 public class Main : Scene
 {
-    private AudioBuffer[] _buffers;
-    private Resampler _resampler;
-    private int _currentBuffer;
-    private float _sampleRate;
-
     protected override void Initialize()
     {
         base.Initialize();
 
-        Sample sample = Sample.LoadFromWav(@"/home/ollie/Music/r-59.wav");
+        Sample sample = Sample.LoadFromWav("/home/ollie/Music/Samples/piano_middlec.wav");
 
-        _sampleRate = sample.SampleRate;
-        _resampler =
-            new Resampler(1, 48000, true, new Sample[] { sample });
-        _resampler.SetSampleRate(0, _sampleRate * 1.15f, 0);
-        _buffers = new AudioBuffer[2];
-        for (int i = 0; i < _buffers.Length; i++)
-        {
-            AdvanceBuffer();
-            _buffers[i] = Game.AudioDevice.CreateBuffer();
-            Game.AudioDevice.UpdateBuffer(_buffers[i], AudioFormat.Stereo16, _resampler.SongBuffer, (int) _resampler.SampleRate);
-        }
-
-        Game.AudioDevice.PlayBuffer(0, _buffers[0]);
-        for (int i = 1; i < _buffers.Length; i++)
-            Game.AudioDevice.QueueBuffer(0, _buffers[i]);
+        Pattern pattern = new Pattern(3, 16);
+        pattern.SetNote(0, 0, new Note(PianoKey.C, Octave.Octave4, 0, 1));
+        pattern.SetNote(1, 0, new Note(PianoKey.E, Octave.Octave4, 0, 1));
+        pattern.SetNote(2, 0, new Note(PianoKey.G, Octave.Octave4, 0, 1));
         
-        Game.AudioDevice.BufferFinished += AudioDeviceOnBufferFinished;
-    }
+        pattern.SetNote(0, 4, new Note(PianoKey.G, Octave.Octave3, 0, 1));
+        pattern.SetNote(1, 4, new Note(PianoKey.B, Octave.Octave3, 0, 1));
+        pattern.SetNote(2, 4, new Note(PianoKey.D, Octave.Octave4, 0, 1));
+        
+        pattern.SetNote(0, 8, new Note(PianoKey.A, Octave.Octave3, 0, 1));
+        pattern.SetNote(1, 8, new Note(PianoKey.C, Octave.Octave4, 0, 1));
+        pattern.SetNote(2, 8, new Note(PianoKey.E, Octave.Octave4, 0, 1));
+        
+        pattern.SetNote(0, 12, new Note(PianoKey.F, Octave.Octave3, 0, 1));
+        pattern.SetNote(1, 12, new Note(PianoKey.A, Octave.Octave3, 0, 1));
+        pattern.SetNote(2, 12, new Note(PianoKey.C, Octave.Octave4, 0, 1));
 
-    private void AudioDeviceOnBufferFinished(int channel)
-    {
-        AdvanceBuffer();
-        Game.AudioDevice.UpdateBuffer(_buffers[_currentBuffer], AudioFormat.Stereo16, _resampler.SongBuffer, (int) _resampler.SampleRate);
-        Game.AudioDevice.QueueBuffer(0, _buffers[_currentBuffer]);
-        _currentBuffer++;
-        if (_currentBuffer >= _buffers.Length)
-            _currentBuffer = 0;
-    }
-
-    private void AdvanceBuffer()
-    {
-        for (int i = 0; i < _resampler.BufferLengthInSamples; i++)
-            _resampler.Advance();
-
-        _resampler.BufferPos = 0;
+        Track track = new Track(new[] { sample }, new[] { pattern }, new[] { 0u }, 125, 6);
+        TrackPlayer player = new TrackPlayer(Game.AudioDevice, track);
+        player.Play();
     }
 }

@@ -77,7 +77,7 @@ public class Resampler
         chn.Sample = sample;
         chn.SamplePos = 0;
         //chn.SamplePos = (int) _samples[sample].DataLengthInSamples - 5;
-        chn.Loop = true;
+        //chn.Loop = true;
         chn.LoopEnd = _samples[sample].DataLengthInSamples - 1;
     }
 

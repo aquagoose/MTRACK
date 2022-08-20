@@ -11,6 +11,8 @@ public struct Sample
     public uint SampleRate;
     public uint DataLengthInSamples;
 
+    public float Multiplier;
+
     public static Sample LoadFromWav(string path)
     {
         byte[] data = Sound.LoadWav(File.ReadAllBytes(path), out int channels, out int sampleRate, out int bitsPerSample);
@@ -20,7 +22,8 @@ public struct Sample
             Stereo = channels == 2,
             SixteenBit = bitsPerSample == 16,
             SampleRate = (uint) sampleRate,
-            DataLengthInSamples = (uint) (data.Length / channels / (bitsPerSample == 16 ? 2 : 1))
+            DataLengthInSamples = (uint) (data.Length / channels / (bitsPerSample == 16 ? 2 : 1)),
+            Multiplier = sampleRate / TrackPlayer.CalculateSampleRate(PianoKey.C, Octave.Octave4, sampleRate, 1)
         };
     }
 }
