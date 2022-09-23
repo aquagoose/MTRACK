@@ -1,4 +1,5 @@
-using Cubic.Utilities;
+using System;
+using Easel.Utilities;
 using MTRACK.Tracker;
 
 namespace MTRACK.Audio;
@@ -10,9 +11,10 @@ public class Resampler
     private bool _stereo;
     
     public readonly uint SampleRate;
-    public uint BufferPos;
-    public readonly short[] SongBuffer;
-    public readonly uint BufferLengthInSamples;
+    //public uint BufferPos;
+    //public readonly short[] SongBuffer;
+    //public readonly uint BufferLengthInSamples;
+    private readonly short[] _leftRight;
 
     public float SampleVolume;
 
@@ -27,18 +29,22 @@ public class Resampler
         _stereo = stereo;
         _samples = samples;
         // Create a song buffer that is always half a second in length.
-        BufferLengthInSamples = sampleRate / 2;
-        SongBuffer = new short[stereo ? BufferLengthInSamples * 2 : BufferLengthInSamples];
-        BufferPos = 0;
+        //BufferLengthInSamples = sampleRate / 2;
+        //SongBuffer = new short[stereo ? BufferLengthInSamples * 2 : BufferLengthInSamples];
+        //BufferPos = 0;
+        _leftRight = new short[2];
 
         SampleVolume = 1;
     }
 
-    public void Advance()
+    public short[] Advance()
     {
         // Clear the song buffer at this position. If you remove this, it will try to mix with what's already there!
-        SongBuffer[BufferPos * 2] = 0;
-        SongBuffer[BufferPos * 2 + 1] = 0;
+        //SongBuffer[BufferPos * 2] = 0;
+        //SongBuffer[BufferPos * 2 + 1] = 0;
+        //int mixed = 0;
+        _leftRight[0] = 0;
+        _leftRight[1] = 0;
         for (int c = 0; c < _channels.Length; c++)
         {
             ref Channel channel = ref _channels[c];
@@ -51,34 +57,37 @@ public class Resampler
                 {
                     short value = GetSample((channel.SamplePos) * 2 + a, ref sample);
                     short valueNext = GetSample((channel.NextSamplePos) * 2 + a, ref sample);
-                    value = (short) CubicMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
-                    SongBuffer[BufferPos * 2 + a] = Mix(SongBuffer[BufferPos * 2 + a], value);
+                    value = (short) EaselMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
+                    //SongBuffer[BufferPos * 2 + a] = Mix(SongBuffer[BufferPos * 2 + a], value);
+                    _leftRight[a] = Mix(_leftRight[a], value);
+                    //mixed += Mix((short) ((mixed >> shift) & bitwise), value) << shift;
+                    //Console.WriteLine(mixed);
                 }
             }
             else
             {
                 short value = GetSample(channel.SamplePos, ref sample);
                 short valueNext = GetSample(channel.NextSamplePos, ref sample);
-                value = (short) CubicMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
-                SongBuffer[BufferPos * 2] = Mix(SongBuffer[BufferPos * 2], value);
-                SongBuffer[BufferPos * 2 + 1] = Mix(SongBuffer[BufferPos * 2 + 1], value);
+                value = (short) EaselMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
+                //SongBuffer[BufferPos * 2] = Mix(SongBuffer[BufferPos * 2], value);
+                //SongBuffer[BufferPos * 2 + 1] = Mix(SongBuffer[BufferPos * 2 + 1], value);
             }
         }
 
-        BufferPos++;
+        //BufferPos++;
+        return _leftRight;
     }
 
     public void SetSampleRate(uint channel, float sampleRate, uint sample)
     {
         ref Channel chn = ref _channels[channel];
-        //ref Sample smp = ref _samples[sample];
+        ref Sample smp = ref _samples[sample];
         chn.SampleRate = sampleRate;
-        //chn.SampleRate = -sampleRate;
         chn.Sample = sample;
         chn.SamplePos = 0;
-        //chn.SamplePos = (int) _samples[sample].DataLengthInSamples - 5;
-        //chn.Loop = true;
-        chn.LoopEnd = _samples[sample].DataLengthInSamples - 1;
+        chn.Loop = smp.Loop;
+        chn.LoopStart = smp.LoopStart;
+        chn.LoopEnd = smp.Loop ? smp.LoopEnd - 1 : smp.DataLengthInSamples - 1;
     }
 
     public void SetSampleRate(uint channel, float sampleRate)
@@ -87,7 +96,7 @@ public class Resampler
         chn.SampleRate = sampleRate;
     }
 
-    public short GetSample(int pos, ref Sample sample)
+    private short GetSample(int pos, ref Sample sample)
     {
         short value;
         if (sample.SixteenBit)
@@ -104,6 +113,6 @@ public class Resampler
 
     private short Mix(short value1, short value2)
     {
-        return (short) CubicMath.Clamp(value1 + (value2 * SampleVolume), short.MinValue, short.MaxValue);
+        return (short) EaselMath.Clamp(value1 + (value2 * SampleVolume), short.MinValue, short.MaxValue);
     }
 }

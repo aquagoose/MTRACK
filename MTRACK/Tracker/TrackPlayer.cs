@@ -1,6 +1,6 @@
 ﻿using System;
-using Cubic.Audio;
 using MTRACK.Audio;
+using Pie.Audio;
 
 namespace MTRACK.Tracker;
 
@@ -22,10 +22,13 @@ public class TrackPlayer : IDisposable
     private int _currentBuffer;
     private int _channel;
 
+    private short[] _buffer;
+    private int _bufferPos;
+
     public TrackPlayer(AudioDevice device, Track track)
     {
         _resampler = new Resampler(32, 48000, true, track.Samples);
-        _resampler.SampleVolume = 48 / 255f;
+        //_resampler.SampleVolume = 48 / 255f;
         _audioDevice = device;
         
         _track = track;
@@ -35,6 +38,8 @@ public class TrackPlayer : IDisposable
 
         _speed = track.InitialSpeed;
         _samplesPerTick = CalculateSamplesPerTick(track.InitialTempo);
+
+        _buffer = new short[_resampler.SampleRate];
     }
 
     public void Play()
@@ -42,33 +47,39 @@ public class TrackPlayer : IDisposable
         for (int i = 0; i < _audioBuffers.Length; i++)
         {
             AdvanceBuffer();
-            _audioDevice.UpdateBuffer(_audioBuffers[i], AudioFormat.Stereo16, _resampler.SongBuffer,
-                (int) _resampler.SampleRate);
+            //_audioDevice.UpdateBuffer(_audioBuffers[i], AudioFormat.Stereo16, _resampler.SongBuffer,
+            //    _resampler.SampleRate);
+            _audioDevice.UpdateBuffer(_audioBuffers[i], AudioFormat.Stereo16, _buffer, _resampler.SampleRate);
         }
 
-        _channel = _audioDevice.PlayBuffer(_audioBuffers[0]);
-        _audioDevice.QueueBuffer(_channel, _audioBuffers[1]);
+        _channel = _audioDevice.FindChannel();
+        _audioDevice.Play(_channel, _audioBuffers[0]);
+        _audioDevice.Queue(_channel, _audioBuffers[1]);
         _audioDevice.BufferFinished += QueueBuffers;
     }
 
     private void AdvanceBuffer()
     {
-        for (int i = 0; i < _resampler.BufferLengthInSamples; i++)
+        //for (int i = 0; i < _resampler.BufferLengthInSamples; i++)
+        //    Advance();
+        for (int i = 0; i < 24000; i++)
             Advance();
-        
-        _resampler.BufferPos = 0;
+
+        _bufferPos = 0;
+        //_resampler.BufferPos = 0;
     }
 
-    private void QueueBuffers(int channel)
+    private void QueueBuffers(AudioDevice device, uint channel)
     {
         if (channel != _channel)
             return;
         
         AdvanceBuffer();
-        
-        _audioDevice.UpdateBuffer(_audioBuffers[_currentBuffer], AudioFormat.Stereo16, _resampler.SongBuffer,
-            (int) _resampler.SampleRate);
-        _audioDevice.QueueBuffer(channel, _audioBuffers[_currentBuffer]);
+
+        //_audioDevice.UpdateBuffer(_audioBuffers[_currentBuffer], AudioFormat.Stereo16, _resampler.SongBuffer,
+        //    _resampler.SampleRate);
+        _audioDevice.UpdateBuffer(_audioBuffers[_currentBuffer], AudioFormat.Stereo16, _buffer, _resampler.SampleRate);
+        device.Queue((int) channel, _audioBuffers[_currentBuffer]);
         _currentBuffer++;
         if (_currentBuffer >= _audioBuffers.Length)
             _currentBuffer = 0;
@@ -91,7 +102,9 @@ public class TrackPlayer : IDisposable
             }
         }
         
-        _resampler.Advance();
+        short[] advance = _resampler.Advance();
+        _buffer[_bufferPos++] = advance[0];
+        _buffer[_bufferPos++] = advance[1];
 
         _currentSamples++;
         if (_currentSamples >= _samplesPerTick)
