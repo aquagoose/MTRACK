@@ -1,6 +1,4 @@
-using MTRACK.Audio;
-
-namespace MTRACK.Tracker;
+namespace libmtrack.Tracker;
 
 public class Track
 {
@@ -11,7 +9,9 @@ public class Track
     public int InitialTempo;
     public int InitialSpeed;
 
-    public Track(Sample[] samples, Pattern[] patterns, uint[] orders, int initialTempo, int initialSpeed)
+    public byte InitialVolume;
+
+    public Track(Sample[] samples, Pattern[] patterns, uint[] orders, int initialTempo, int initialSpeed, byte initialVolume)
     {
         Samples = samples;
         Patterns = patterns;
@@ -19,5 +19,6 @@ public class Track
 
         InitialTempo = initialTempo;
         InitialSpeed = initialSpeed;
+        InitialVolume = initialVolume;
     }
 }

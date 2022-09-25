@@ -1,6 +1,4 @@
-using System;
-
-namespace MTRACK.Audio;
+namespace libmtrack.Audio;
 
 public struct Channel
 {
@@ -63,7 +61,7 @@ public struct Channel
     public Channel(Resampler resampler)
     {
         _resamplerSampleRate = resampler.SampleRate;
-        ChunkSamples = (int) resampler.SampleRate;
+        ChunkSamples = 10000;
         _sampleRate = 0;
         Speed = 0;
         Sample = 0;

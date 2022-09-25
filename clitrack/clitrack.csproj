@@ -8,12 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Easel\Easel\Easel.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Audio" />
-      <Folder Include="Tracker" />
+      <ProjectReference Include="..\..\Easel\Pie\Pie.Audio\Pie.Audio.csproj" />
+      <ProjectReference Include="..\libmtrack\libmtrack.csproj" />
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-namespace MTRACK.Tracker;
+namespace libmtrack.Tracker;
 
 public struct Note
 {

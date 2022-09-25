@@ -1,8 +1,6 @@
-using System;
-using Easel.Utilities;
-using MTRACK.Tracker;
+using libmtrack.Tracker;
 
-namespace MTRACK.Audio;
+namespace libmtrack.Audio;
 
 public class Resampler
 {
@@ -57,7 +55,7 @@ public class Resampler
                 {
                     short value = GetSample((channel.SamplePos) * 2 + a, ref sample);
                     short valueNext = GetSample((channel.NextSamplePos) * 2 + a, ref sample);
-                    value = (short) EaselMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
+                    value = MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
                     //SongBuffer[BufferPos * 2 + a] = Mix(SongBuffer[BufferPos * 2 + a], value);
                     _leftRight[a] = Mix(_leftRight[a], value);
                     //mixed += Mix((short) ((mixed >> shift) & bitwise), value) << shift;
@@ -68,9 +66,11 @@ public class Resampler
             {
                 short value = GetSample(channel.SamplePos, ref sample);
                 short valueNext = GetSample(channel.NextSamplePos, ref sample);
-                value = (short) EaselMath.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
+                value = MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
                 //SongBuffer[BufferPos * 2] = Mix(SongBuffer[BufferPos * 2], value);
                 //SongBuffer[BufferPos * 2 + 1] = Mix(SongBuffer[BufferPos * 2 + 1], value);
+                _leftRight[0] = Mix(_leftRight[0], value);
+                _leftRight[1] = Mix(_leftRight[1], value);
             }
         }
 
@@ -113,6 +113,6 @@ public class Resampler
 
     private short Mix(short value1, short value2)
     {
-        return (short) EaselMath.Clamp(value1 + (value2 * SampleVolume), short.MinValue, short.MaxValue);
+        return (short) MathHelper.Clamp(value1 + (value2 * SampleVolume), short.MinValue, short.MaxValue);
     }
 }

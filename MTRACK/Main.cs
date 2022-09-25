@@ -1,13 +1,6 @@
 using System;
 using Easel;
 using Easel.Scenes;
-using MTRACK.Audio;
-using MTRACK.Tracker;
-using Note = MTRACK.Tracker.Note;
-using Octave = MTRACK.Tracker.Octave;
-using Pattern = MTRACK.Tracker.Pattern;
-using PianoKey = MTRACK.Tracker.PianoKey;
-using Track = MTRACK.Tracker.Track;
 
 namespace MTRACK;
 
@@ -63,13 +56,13 @@ public class Main : EaselGame
         TrackPlayer player = new TrackPlayer(Audio, track);
         player.Play();*/
 
-        Sample sample = Sample.LoadFromWav("/home/ollie/Music/Laxity - A question of luck.wav");
+        /*Sample sample = Sample.LoadFromWav("/home/ollie/Music/Laxity - A question of luck.wav");
         sample.Loop = true;
         Pattern pattern = new Pattern(2, 1);
         pattern.SetNote(0, 0, new Note(PianoKey.D, Octave.Octave4, 0, 1));
         Track track = new Track(new[] { sample }, new[] { pattern }, new[] { 0u }, 1, 9999999);
         TrackPlayer player = new TrackPlayer(Audio, track);
-        player.Play();
+        player.Play();*/
     }
 
     public Main(GameSettings settings, Scene scene) : base(settings, scene) { }
