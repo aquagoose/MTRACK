@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MTRACK", "MTRACK\MTRACK.csproj", "{E63F3052-ADDB-4431-97E6-7B6B837CDBDF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Easel", "..\Easel\Easel\Easel.csproj", "{64A05450-8D01-421C-9C1B-6E0D8EFD080C}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libmtrack", "libmtrack\libmtrack.csproj", "{F4B6D99C-3DC2-43E1-B67E-FF971F469BC9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "clitrack", "clitrack\clitrack.csproj", "{9BD2DA96-E496-46DA-B04D-DBBDC9A36363}"
@@ -20,10 +18,6 @@ Global
 		{E63F3052-ADDB-4431-97E6-7B6B837CDBDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E63F3052-ADDB-4431-97E6-7B6B837CDBDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E63F3052-ADDB-4431-97E6-7B6B837CDBDF}.Release|Any CPU.Build.0 = Release|Any CPU
-		{64A05450-8D01-421C-9C1B-6E0D8EFD080C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{64A05450-8D01-421C-9C1B-6E0D8EFD080C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{64A05450-8D01-421C-9C1B-6E0D8EFD080C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{64A05450-8D01-421C-9C1B-6E0D8EFD080C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F4B6D99C-3DC2-43E1-B67E-FF971F469BC9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F4B6D99C-3DC2-43E1-B67E-FF971F469BC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F4B6D99C-3DC2-43E1-B67E-FF971F469BC9}.Release|Any CPU.ActiveCfg = Release|Any CPU

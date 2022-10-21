@@ -30,9 +30,14 @@ public class TrackPlayer
         _speed = track.InitialSpeed;
         _samplesPerTick = CalculateSamplesPerTick(track.InitialTempo);
 
+        if (_track.Orders.Length == 0)
+            IsFinished = true;
+
         Loop = loop;
 
         _empty = new short[2];
+
+        _order = 6;
     }
 
     public short[] Advance()
@@ -46,11 +51,79 @@ public class TrackPlayer
             for (int c = 0; c < pattern.Channels; c++)
             {
                 ref Note note = ref pattern.Notes[c, _row];
-                ref Sample sample = ref _track.Samples[note.Sample];
-                if (note.Key != PianoKey.None)
+                switch (note.Key)
                 {
-                    float multiplier = CalculateSampleRate(note.Key, note.Octave, sample.SampleRate, sample.Multiplier);
-                    _resampler.SetSampleRate((uint) c, multiplier, note.Sample);
+                    case PianoKey.None:
+                        break;
+                    case PianoKey.NoteCut:
+                        _resampler.SetSampleRate((uint) c, 0, 0, 0);
+                        break;
+                    default:
+                        ref Sample sample = ref _track.Samples[note.Sample];
+                        float multiplier = CalculateSampleRate(note.Key, note.Octave, sample.SampleRate, sample.Multiplier);
+                        _resampler.SetSampleRate((uint) c, multiplier, note.Sample, note.NormalizedVolume);
+                        break;
+                }
+
+                switch (note.Effect)
+                {
+                    case ITEffect.None:
+                        break;
+                    case ITEffect.SetSpeed:
+                        _speed = note.EffectParam;
+                        break;
+                    case ITEffect.PositionJump:
+                        break;
+                    case ITEffect.PatternBreak:
+                        break;
+                    case ITEffect.VolumeSlide:
+                        break;
+                    case ITEffect.PortamentoDown:
+                        break;
+                    case ITEffect.PortamentoUp:
+                        break;
+                    case ITEffect.TonePortamento:
+                        break;
+                    case ITEffect.Vibrato:
+                        break;
+                    case ITEffect.Tremor:
+                        break;
+                    case ITEffect.Arpeggio:
+                        break;
+                    case ITEffect.VolumeSlideVibrato:
+                        break;
+                    case ITEffect.VolumeSlideTonePortamento:
+                        break;
+                    case ITEffect.SetChannelVolume:
+                        break;
+                    case ITEffect.ChannelVolumeSlide:
+                        break;
+                    case ITEffect.SampleOffset:
+                        if (note.Key != PianoKey.None)
+                            _resampler.SetSampleOffset((uint) c, (uint) (note.EffectParam * 256));
+                        break;
+                    case ITEffect.PanningSlide:
+                        break;
+                    case ITEffect.Retrigger:
+                        break;
+                    case ITEffect.Tremolo:
+                        break;
+                    case ITEffect.Special:
+                        break;
+                    case ITEffect.SetTemp:
+                        break;
+                    case ITEffect.FineVibrato:
+                        break;
+                    case ITEffect.GlobalVolumeSlide:
+                        break;
+                    case ITEffect.SetPanning:
+                        break;
+                    case ITEffect.Panbrello:
+                        break;
+                    case ITEffect.MidiMacro:
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
         }
@@ -91,7 +164,13 @@ public class TrackPlayer
 
     public static float CalculateSampleRate(PianoKey key, Octave octave, float c5Rate, float multiplier)
     {
-        int note = 40 + (int) (key - 3) + (int) (octave - 4) * 12;
+        if (key == PianoKey.NoteCut)
+        {
+            Console.WriteLine("dfdgf");
+            return 0;
+        }
+
+        int note = 40 + (int) (key - 3) + (int) (octave - 3) * 12;
         float powNote = MathF.Pow(2, (note - 49f) / 12f);
         return c5Rate * powNote * multiplier;
     }

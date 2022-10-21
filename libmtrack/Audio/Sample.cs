@@ -14,16 +14,23 @@ public struct Sample
     public uint LoopStart;
     public uint LoopEnd;
 
-    public Sample(byte[] data, bool stereo, bool sixteenBit, uint sampleRate, bool loop, uint loopStart = 0, int loopEnd = -1)
+    public bool Unsigned;
+    public bool UseAlternativeStereoMethod;
+
+    public Sample(byte[] data, bool stereo, bool sixteenBit, uint sampleRate, bool loop, uint loopStart = 0, int loopEnd = -1, bool unsigned = false, bool useAlternativeStereoMethod = false)
     {
         Data = data;
         Stereo = stereo;
         SixteenBit = sixteenBit;
         SampleRate = sampleRate;
         DataLengthInSamples = (uint) (data.Length / (stereo ? 2 : 1) / (sixteenBit ? 2 : 1));
-        Multiplier = sampleRate / TrackPlayer.CalculateSampleRate(PianoKey.C, Octave.Octave4, sampleRate, 1);
+        Multiplier = sampleRate / TrackPlayer.CalculateSampleRate(PianoKey.C, Octave.Octave5, sampleRate, 1);
         Loop = loop;
         LoopStart = loopStart;
         LoopEnd = loopEnd == -1 ? DataLengthInSamples : (uint) loopEnd;
+        Unsigned = unsigned;
+        UseAlternativeStereoMethod = useAlternativeStereoMethod;
+        
+        Console.WriteLine(DataLengthInSamples);
     }
 }

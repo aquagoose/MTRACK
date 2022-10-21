@@ -102,7 +102,7 @@ public struct Channel
             }
         }
 
-        if (SamplePosF <= LoopStart)
+        /*if (SamplePosF <= LoopStart)
         {
             if (Loop)
                 SamplePosF = LoopEnd - (SamplePosF + LoopStart);
@@ -111,6 +111,6 @@ public struct Channel
                 SampleRate = 0;
                 SamplePos = 0;
             }
-        }
+        }*/
     }
 }

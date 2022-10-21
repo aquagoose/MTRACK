@@ -4,14 +4,14 @@ public class Track
 {
     public Sample[] Samples;
     public Pattern[] Patterns;
-    public uint[] Orders;
+    public byte[] Orders;
 
     public int InitialTempo;
     public int InitialSpeed;
 
     public byte InitialVolume;
 
-    public Track(Sample[] samples, Pattern[] patterns, uint[] orders, int initialTempo, int initialSpeed, byte initialVolume)
+    public Track(Sample[] samples, Pattern[] patterns, byte[] orders, int initialTempo, int initialSpeed, byte initialVolume)
     {
         Samples = samples;
         Patterns = patterns;

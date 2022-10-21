@@ -7,7 +7,7 @@ using clitrack;
 using libmtrack.Tracker;
 using Pie.Audio;
 
-Console.CancelKeyPress += (sender, eventArgs) =>
+/*Console.CancelKeyPress += (sender, eventArgs) =>
 {
     Console.ResetColor();
     Console.Clear();
@@ -22,16 +22,18 @@ Console.ForegroundColor = ConsoleColor.Black;
 Console.SetCursorPosition(0, 0);
 Console.WriteLine("MTRACK CLI 1.0.0a1".PadRight(Console.WindowWidth));
 Console.ResetColor();
-Console.BackgroundColor = ConsoleColor.Magenta;
+Console.BackgroundColor = ConsoleColor.Magenta;*/
 TrackAudio audio = new TrackAudio();
 
 Track track = null;
-try
-{
+//try
+//{
     track = Loader.LoadFile(args[0]);
     audio.Play(track);
-}
-catch (Exception e)
+while (!audio.IsFinished)
+    Thread.Sleep(1000);
+//}
+/*catch (Exception e)
 {
     //Console.WriteLine(e.Message);
     Console.WriteLine(e);
@@ -60,6 +62,6 @@ while (!audio.IsFinished)
 
 Console.ResetColor();
 Console.Clear();
-Console.CursorVisible = true;
+Console.CursorVisible = true;*/
 
 audio.Dispose();

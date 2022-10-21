@@ -28,14 +28,14 @@ public class TrackAudio : IDisposable
             _buffers[i] = _device.CreateBuffer();
         }
 
-        _buffer = new short[SampleRate];
+        _buffer = new short[SampleRate * 2];
         
         _device.BufferFinished += DeviceOnBufferFinished;
     }
 
     public void Play(Track track)
     {
-        _player = new TrackPlayer(track, false);
+        _player = new TrackPlayer(track, true);
         
         for (int i = 0; i < _buffers.Length; i++)
             AdvanceBuffer(i);
@@ -58,7 +58,7 @@ public class TrackAudio : IDisposable
 
     private void AdvanceBuffer(int index)
     {
-        for (int i = 0; i < SampleRate / 2; i++)
+        for (int i = 0; i < SampleRate; i++)
         {
             short[] advance = _player.Advance();
             _buffer[_bufferPos++] = advance[0];

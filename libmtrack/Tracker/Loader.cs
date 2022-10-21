@@ -62,9 +62,9 @@ public static class Loader
         Sample sample = new Sample(data, channels == 2, bitsPerSample == 16, sampleRate, false);
         uint songLength = (sample.DataLengthInSamples / sampleRate) + 1;
         Pattern pattern = new Pattern(1, (int) songLength);
-        pattern.SetNote(0, 0, new Note(PianoKey.C, Octave.Octave4, 0, 1));
+        pattern.SetNote(0, 0, new Note(PianoKey.C, Octave.Octave4, 0, 1, ITEffect.None, 0));
         // 128 bpm, speed 48 is exactly 1 row per second.
-        return new Track(new[] { sample }, new[] { pattern }, new[] { 0u }, 120, 48, 255);
+        return new Track(new[] { sample }, new[] { pattern }, new[] { (byte) 0 }, 120, 48, 255);
     }
 
     public static Track LoadFromVorbis(BinaryReader reader)
@@ -91,9 +91,9 @@ public static class Loader
         Sample sample = new Sample(vorbisData, vorbis.Channels == 2, true, (uint) vorbis.SampleRate, false);
         uint songLength = (sample.DataLengthInSamples / sample.SampleRate) + 1;
         Pattern pattern = new Pattern(1, (int) songLength);
-        pattern.SetNote(0, 0, new Note(PianoKey.C, Octave.Octave4, 0, 1));
+        pattern.SetNote(0, 0, new Note(PianoKey.C, Octave.Octave4, 0, 1, ITEffect.None, 0));
         // 128 bpm, speed 48 is exactly 1 row per second.
-        return new Track(new[] { sample }, new[] { pattern }, new[] { 0u }, 120, 48, 255);
+        return new Track(new[] { sample }, new[] { pattern }, new[] { (byte) 0 }, 120, 48, 255);
     }
 
     public static Track LoadFromIT(BinaryReader reader)
@@ -153,24 +153,150 @@ public static class Loader
             reader.ReadByte(); // 00h (??? this looks like a padding byte?)
             byte sGlobalVolume = reader.ReadByte();
             byte sFlags = reader.ReadByte();
-            //if ((sFlags & 0b0001) == 1)
-            //    throw new Exception("Compressed samples cannot be loaded.");
+            if ((sFlags & 8) == 8)
+                throw new Exception("Compressed samples cannot be loaded.");
+            bool sSixteenBit = (sFlags & 2) == 2;
+            bool sStereo = (sFlags & 4) == 4;
+            
             byte sVolume = reader.ReadByte();
             string sName = new string(reader.ReadChars(26));
-            Console.Write($"Loading Sample \"{sName} ({sDosFileName})\"... ");
+            Console.Write($"Loading Sample \"{sName} ({sDosFileName})\"... Flags " + Convert.ToString(sFlags, 2) + "... ");
             byte sConvert = reader.ReadByte();
             // MTRACK wants signed samples by default, we need to tell it if we are using unsigned.
             bool sUnsigned = (sConvert & 0) != 1;
             byte sDefaultPan = reader.ReadByte();
             uint sLength = reader.ReadUInt32();
             Console.Write(sLength + " samples... ");
+            bool sLoop = (sFlags & 16) == 16;
             uint sLoopBegin = reader.ReadUInt32();
             uint sLoopEnd = reader.ReadUInt32();
             uint sSampleRate = reader.ReadUInt32();
-            Console.WriteLine(sSampleRate + "Hz...");
+            Console.Write(sSampleRate + "Hz...");
+            uint sSusLoopBegin = reader.ReadUInt32();
+            uint sSusLoopEnd = reader.ReadUInt32();
+            uint sPtr = reader.ReadUInt32();
+            reader.ReadBytes(4); // TODO vibrato stuff
+            long currentPos = reader.BaseStream.Position;
+            reader.BaseStream.Position = sPtr;
+            byte[] sData = reader.ReadBytes((int) sLength * (sSixteenBit ? 2 : 1) * (sStereo ? 2 : 1));
+            reader.BaseStream.Position = currentPos;
+
+            Console.Write(sStereo ? "Stereo... " : "Mono... ");
+            Console.WriteLine(sSixteenBit ? "16-bit... " : "8-bit... ");
+
+            samples[i] = new Sample(sData, sStereo, sSixteenBit, sSampleRate, sLoop, sLoopBegin, (int) sLoopEnd, sUnsigned, true);
         }
 
-        return new Track(Array.Empty<Sample>(), Array.Empty<Pattern>(), Array.Empty<uint>(), 0, 0, 0);
+        Pattern[] patterns = new Pattern[numPatterns];
+        //Console.WriteLine(numPatterns);
+        
+        (byte maskVariable, byte lastNote, byte lastInstrument, byte lastVolume, byte lastCommand, byte lastCommandValue)[] prevVars = new (byte maskVariable, byte lastNote, byte lastInstrument, byte lastVolume, byte lastCommand, byte lastCommandValue)[64];
+        
+        for (int i = 0; i < numPatterns; i++)
+        {
+            ushort length = reader.ReadUInt16();
+            ushort rows = reader.ReadUInt16();
+            //Console.WriteLine(reader.BaseStream.Position);
+            //Console.WriteLine(rows);
+            //Console.WriteLine(i);
+
+            patterns[i] = new Pattern(64, rows);
+
+            reader.ReadBytes(4); // Padding bytes
+
+            ushort row = 0;
+            while (row < rows)
+            {
+                byte channelVariable = reader.ReadByte();
+                if (channelVariable == 0)
+                {
+                    row++;
+                    continue;
+                }
+
+                byte channel = (byte) ((channelVariable - 1) & 63);
+                byte maskVariable = (channelVariable & 128) == 128 ? reader.ReadByte() : prevVars[channel].maskVariable;
+                prevVars[channel].maskVariable = maskVariable;
+
+                byte note = 253;
+                byte instrument = 0;
+                byte volume = 65;
+                byte command = 0;
+                byte commandInfo = 0;
+                
+                if ((maskVariable & 1) == 1)
+                {
+                    note = reader.ReadByte();
+                    prevVars[channel].lastNote = note;
+                    volume = 64;
+                }
+                
+                if ((maskVariable & 2) == 2)
+                {
+                    instrument = reader.ReadByte();
+                    prevVars[channel].lastInstrument = instrument;
+                }
+                
+                if ((maskVariable & 4) == 4)
+                {
+                    volume = reader.ReadByte();
+                    prevVars[channel].lastVolume = volume;
+                }
+                
+                if ((maskVariable & 8) == 8)
+                {
+                    command = reader.ReadByte();
+                    commandInfo = reader.ReadByte();
+
+                    prevVars[channel].lastCommand = command;
+                    prevVars[channel].lastCommandValue = commandInfo;
+                }
+
+                if ((maskVariable & 16) == 16)
+                {
+                    note = prevVars[channel].lastNote;
+                    volume = (byte) (volume == 65 ? 64 : volume);
+                }
+
+                if ((maskVariable & 32) == 32)
+                    instrument = prevVars[channel].lastInstrument;
+
+                if ((maskVariable & 64) == 64)
+                    volume = prevVars[channel].lastVolume;
+
+                if ((maskVariable & 128) == 128)
+                {
+                    command = prevVars[channel].lastCommand;
+                    commandInfo = prevVars[channel].lastCommandValue;
+                }
+
+                PianoKey key = PianoKey.None;
+                Octave octave = Octave.Octave0;
+                
+                switch (note)
+                {
+                    case 255:
+                        key = PianoKey.NoteOff;
+                        octave = Octave.Octave0;
+                        break;
+                    case 254:
+                        key = PianoKey.NoteCut;
+                        octave = Octave.Octave0;
+                        break;
+                    case 253:
+                        break;
+                    default:
+                        key = (PianoKey) (note % 12 + 3);
+                        octave = (Octave) (note / 12);
+                        break;
+                }
+
+                Console.WriteLine($"Pattern: {i}, NOTE: CH {channel}, Row {row}, Key {key}, Octave {octave}, Instrument {instrument}, Volume: {volume}, Effect: {(ITEffect) command}, Param: {commandInfo}");
+                patterns[i].SetNote(channel, row, new Note(key, octave, (byte) (instrument - 1), volume / 64f, (ITEffect) command, commandInfo));
+            }
+        }
+
+        return new Track(samples, patterns, orders, initialTempo, initialSpeed, 48);
     }
 
     public static long FindNextString(this BinaryReader reader, string @string)

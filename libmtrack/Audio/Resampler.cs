@@ -38,9 +38,6 @@ public class Resampler
     public short[] Advance()
     {
         // Clear the song buffer at this position. If you remove this, it will try to mix with what's already there!
-        //SongBuffer[BufferPos * 2] = 0;
-        //SongBuffer[BufferPos * 2 + 1] = 0;
-        //int mixed = 0;
         _leftRight[0] = 0;
         _leftRight[1] = 0;
         for (int c = 0; c < _channels.Length; c++)
@@ -53,22 +50,27 @@ public class Resampler
             {
                 for (int a = 0; a < 2; a++)
                 {
-                    short value = GetSample((channel.SamplePos) * 2 + a, ref sample);
-                    short valueNext = GetSample((channel.NextSamplePos) * 2 + a, ref sample);
-                    value = MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
-                    //SongBuffer[BufferPos * 2 + a] = Mix(SongBuffer[BufferPos * 2 + a], value);
+                    short value, valueNext;
+                    if (sample.UseAlternativeStereoMethod)
+                    {
+                        value = GetSample((int) (channel.SamplePos + (a == 1 ? sample.DataLengthInSamples : 0)), ref sample);
+                        valueNext = GetSample((int) (channel.NextSamplePos + (a == 1 ? sample.DataLengthInSamples : 0)), ref sample);
+                    }
+                    else
+                    {
+                        value = GetSample(channel.SamplePos * 2 + a, ref sample);
+                        valueNext = GetSample(channel.NextSamplePos * 2 + a, ref sample);
+                    }
+
+                    value = (short) (MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos) * channel.NormalizedVolume);
                     _leftRight[a] = Mix(_leftRight[a], value);
-                    //mixed += Mix((short) ((mixed >> shift) & bitwise), value) << shift;
-                    //Console.WriteLine(mixed);
                 }
             }
             else
             {
                 short value = GetSample(channel.SamplePos, ref sample);
-                short valueNext = GetSample(channel.NextSamplePos, ref sample);
-                value = MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos);
-                //SongBuffer[BufferPos * 2] = Mix(SongBuffer[BufferPos * 2], value);
-                //SongBuffer[BufferPos * 2 + 1] = Mix(SongBuffer[BufferPos * 2 + 1], value);
+                //short valueNext = GetSample(channel.NextSamplePos, ref sample);
+                //value = (short) (MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos) * channel.NormalizedVolume);
                 _leftRight[0] = Mix(_leftRight[0], value);
                 _leftRight[1] = Mix(_leftRight[1], value);
             }
@@ -78,7 +80,7 @@ public class Resampler
         return _leftRight;
     }
 
-    public void SetSampleRate(uint channel, float sampleRate, uint sample)
+    public void SetSampleRate(uint channel, float sampleRate, uint sample, float volume)
     {
         ref Channel chn = ref _channels[channel];
         ref Sample smp = ref _samples[sample];
@@ -88,12 +90,20 @@ public class Resampler
         chn.Loop = smp.Loop;
         chn.LoopStart = smp.LoopStart;
         chn.LoopEnd = smp.Loop ? smp.LoopEnd - 1 : smp.DataLengthInSamples - 1;
+        chn.NormalizedVolume = volume;
     }
 
     public void SetSampleRate(uint channel, float sampleRate)
     {
         ref Channel chn = ref _channels[channel];
         chn.SampleRate = sampleRate;
+    }
+
+    public void SetSampleOffset(uint channel, uint offset)
+    {
+        Console.WriteLine(channel);
+        ref Channel chn = ref _channels[channel];
+        chn.SamplePos = (int) offset;
     }
 
     private short GetSample(int pos, ref Sample sample)
@@ -106,7 +116,7 @@ public class Resampler
             value = (short) (sample.Data[pos] | (sample.Data[pos + 1] << 8));
         }
         else
-            value = (short) ((sample.Data[pos] << 8) - short.MaxValue);
+            value = (short) ((sample.Data[pos] << 8) - (sample.Unsigned ? 0 : short.MaxValue));
 
         return value;
     }

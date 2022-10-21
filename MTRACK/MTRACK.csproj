@@ -8,12 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Easel\Easel\Easel.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Audio" />
-      <Folder Include="Tracker" />
+      <PackageReference Include="Eto.Forms" Version="2.7.1" />
+      <PackageReference Include="Eto.Platform.Gtk" Version="2.7.1" />
     </ItemGroup>
 
 </Project>

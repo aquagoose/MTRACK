@@ -1,11 +1,4 @@
-﻿using Easel;
-using Easel.Scenes;
+﻿using Eto.Forms;
 using MTRACK;
 
-GameSettings settings = new GameSettings()
-{
-    VSync = true
-};
-
-using Main game = new Main(settings, null);
-game.Run();
+new Application(Eto.Platforms.Gtk).Run(new MainForm());
