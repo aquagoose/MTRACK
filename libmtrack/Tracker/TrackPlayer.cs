@@ -20,9 +20,9 @@ public class TrackPlayer
 
     private short[] _empty;
 
-    public TrackPlayer(Track track, bool loop = true)
+    public TrackPlayer(Track track, uint sampleRate, bool loop = true)
     {
-        _resampler = new Resampler(32, 48000, true, track.Samples);
+        _resampler = new Resampler(32, sampleRate, true, track.Samples);
         _resampler.SampleVolume = track.InitialVolume / (float) byte.MaxValue;
 
         _track = track;
@@ -36,8 +36,6 @@ public class TrackPlayer
         Loop = loop;
 
         _empty = new short[2];
-
-        _order = 6;
     }
 
     public short[] Advance()
@@ -48,20 +46,27 @@ public class TrackPlayer
         if (_currentSamples == 0 && _tick == 0)
         {
             ref Pattern pattern = ref _track.Patterns[_track.Orders[_order]];
-            for (int c = 0; c < pattern.Channels; c++)
+            for (uint c = 0; c < pattern.Channels; c++)
             {
                 ref Note note = ref pattern.Notes[c, _row];
+                if (!note.Initialized)
+                    continue;
                 switch (note.Key)
                 {
                     case PianoKey.None:
+                        if (note.Volume <= 64)
+                            _resampler.SetChannelVolume(c, note.NormalizedVolume);
                         break;
                     case PianoKey.NoteCut:
-                        _resampler.SetSampleRate((uint) c, 0, 0, 0);
+                        _resampler.SetSampleRate(c, 0, 0, 0);
+                        break;
+                    case PianoKey.NoteOff:
+                        _resampler.SetSampleRate(c, 0, 0, 0);
                         break;
                     default:
                         ref Sample sample = ref _track.Samples[note.Sample];
                         float multiplier = CalculateSampleRate(note.Key, note.Octave, sample.SampleRate, sample.Multiplier);
-                        _resampler.SetSampleRate((uint) c, multiplier, note.Sample, note.NormalizedVolume);
+                        _resampler.SetSampleRate(c, multiplier, note.Sample, note.NormalizedVolume);
                         break;
                 }
 
@@ -100,7 +105,7 @@ public class TrackPlayer
                         break;
                     case ITEffect.SampleOffset:
                         if (note.Key != PianoKey.None)
-                            _resampler.SetSampleOffset((uint) c, (uint) (note.EffectParam * 256));
+                            _resampler.SetSampleOffset(c, (uint) (note.EffectParam * 256));
                         break;
                     case ITEffect.PanningSlide:
                         break;
@@ -143,7 +148,7 @@ public class TrackPlayer
                 {
                     _row = 0;
                     _order++;
-                    if (_order >= _track.Orders.Length)
+                    if (_order >= _track.Orders.Length || _track.Orders[_order] == 255)
                     {
                         if (Loop)
                             _order = 0;
@@ -165,10 +170,7 @@ public class TrackPlayer
     public static float CalculateSampleRate(PianoKey key, Octave octave, float c5Rate, float multiplier)
     {
         if (key == PianoKey.NoteCut)
-        {
-            Console.WriteLine("dfdgf");
             return 0;
-        }
 
         int note = 40 + (int) (key - 3) + (int) (octave - 3) * 12;
         float powNote = MathF.Pow(2, (note - 49f) / 12f);

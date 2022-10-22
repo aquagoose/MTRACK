@@ -69,8 +69,8 @@ public class Resampler
             else
             {
                 short value = GetSample(channel.SamplePos, ref sample);
-                //short valueNext = GetSample(channel.NextSamplePos, ref sample);
-                //value = (short) (MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos) * channel.NormalizedVolume);
+                short valueNext = GetSample(channel.NextSamplePos, ref sample);
+                value = (short) (MathHelper.Lerp(value, valueNext, channel.SamplePosF - channel.SamplePos) * channel.NormalizedVolume);
                 _leftRight[0] = Mix(_leftRight[0], value);
                 _leftRight[1] = Mix(_leftRight[1], value);
             }
@@ -101,9 +101,14 @@ public class Resampler
 
     public void SetSampleOffset(uint channel, uint offset)
     {
-        Console.WriteLine(channel);
         ref Channel chn = ref _channels[channel];
         chn.SamplePos = (int) offset;
+    }
+
+    public void SetChannelVolume(uint channel, float volume)
+    {
+        ref Channel chn = ref _channels[channel];
+        chn.NormalizedVolume = volume;
     }
 
     private short GetSample(int pos, ref Sample sample)
@@ -113,6 +118,8 @@ public class Resampler
         {
             pos *= 2;
             pos -= pos % 2;
+            if (pos >= sample.Data.Length)
+                return 0;
             value = (short) (sample.Data[pos] | (sample.Data[pos + 1] << 8));
         }
         else

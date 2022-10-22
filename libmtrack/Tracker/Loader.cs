@@ -292,7 +292,7 @@ public static class Loader
                 }
 
                 Console.WriteLine($"Pattern: {i}, NOTE: CH {channel}, Row {row}, Key {key}, Octave {octave}, Instrument {instrument}, Volume: {volume}, Effect: {(ITEffect) command}, Param: {commandInfo}");
-                patterns[i].SetNote(channel, row, new Note(key, octave, (byte) (instrument - 1), volume / 64f, (ITEffect) command, commandInfo));
+                patterns[i].SetNote(channel, row, new Note(key, octave, (byte) (instrument - 1), volume, (ITEffect) command, commandInfo));
             }
         }
 
