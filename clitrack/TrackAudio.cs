@@ -42,7 +42,7 @@ public class TrackAudio : IDisposable
 
         _currentBuffer = 0;
         
-        _device.Play(0, _buffers[0], pitch: 1.3f);
+        _device.Play(0, _buffers[0]);
         for (int i = 1; i < _buffers.Length; i++)
             _device.Queue(0, _buffers[i]);
     }

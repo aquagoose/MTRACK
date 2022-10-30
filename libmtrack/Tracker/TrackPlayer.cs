@@ -116,6 +116,7 @@ public class TrackPlayer
                     case ITEffect.Special:
                         break;
                     case ITEffect.SetTemp:
+                        _samplesPerTick = CalculateSamplesPerTick(note.EffectParam);
                         break;
                     case ITEffect.FineVibrato:
                         break;
